@@ -13,8 +13,10 @@ from keras import layers
 from keras import models
 from tensorflow.keras import optimizers
 from keras.optimizers import Adam
-from model import build_modelB7
+from model import build_modelB7, loadresumemodel, modelR2Unfreze, model_block5Unfreze
 from DataLoader import Data_generator
+#load Check point
+from tensorflow.keras.models import load_model
 import argparse
 
     
@@ -50,6 +52,8 @@ def main():
     my_parser.add_argument('--R', type=int, help='[1:R1, 2:R2]')
     my_parser.add_argument('--lr', type=float, default=1e-4)
     my_parser.add_argument('--batchsize', type=int, default=16)
+    my_parser.add_argument('--resume', action='store_true')
+    my_parser.add_argument('--checkpoint_dir', type=str ,default=".")
     
     args = my_parser.parse_args()
     
@@ -63,7 +67,7 @@ def main():
     ## get my_parser
     save_dir = args.save_dir
     name = args.name
-    R = args.name
+    R = args.R
     _R = f'R{R}'
     root_base = f'{save_dir}/{name}/{_R}'
     os.makedirs(root_base, exist_ok=True)
@@ -74,7 +78,12 @@ def main():
     epochs = args.epochs
     
     ### Create Model 
-    input_shape, model = build_modelB7(fine_tune=True)
+    if args.resume :
+         input_shape, model = loadresumemodel(args.checkpoint_dir)
+    elif args.R == 2:
+        input_shape, model = model_block5Unfreze(args.checkpoint_dir)
+    else:    
+        input_shape, model = build_modelB7(fine_tune=True)
     ##get images size 
     IMAGE_SIZE = input_shape[0]
     model.summary()
