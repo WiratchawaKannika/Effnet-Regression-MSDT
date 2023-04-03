@@ -47,13 +47,17 @@ def main():
     my_parser.add_argument('--epochs', type=int, default=200, help='number of epochs to train our network for')
     my_parser.add_argument('--gpu', type=int, default=0, help='Number GPU 0,1')
     my_parser.add_argument('--data_path', type=str, default='/home/kannika/CSV/datasetMSDT_train_valid.csv')
-    my_parser.add_argument('--save_dir', type=str, help='Path to Save output training model [/media/data/ModelEffNet/Regression]')
+    my_parser.add_argument('--save_dir', type=str, help='Main Output Path', default="/media/data/ModelEffNet/Regression")
     my_parser.add_argument('--name', type=str, help='Name to save output in save_dir')
     my_parser.add_argument('--R', type=int, help='[1:R1, 2:R2]')
     my_parser.add_argument('--lr', type=float, default=1e-4)
     my_parser.add_argument('--batchsize', type=int, default=16)
     my_parser.add_argument('--resume', action='store_true')
     my_parser.add_argument('--checkpoint_dir', type=str ,default=".")
+    my_parser.add_argument('--tensorName', type=str ,default="Mylogs_tensor")
+    my_parser.add_argument('--checkpointerName', type=str ,default="checkpointer")
+    my_parser.add_argument('--epochendName', type=str ,default="on_epoch_end")
+    my_parser.add_argument('--FmodelsName', type=str ,default="models")
     
     args = my_parser.parse_args()
     
@@ -82,6 +86,8 @@ def main():
          input_shape, model = loadresumemodel(args.checkpoint_dir)
     elif args.R == 2:
         input_shape, model = model_block5Unfreze(args.checkpoint_dir)
+    elif args.resume and args.R == 2:
+        input_shape, model = loadresumemodel(args.checkpoint_dir)
     else:    
         input_shape, model = build_modelB7(fine_tune=True)
     ##get images size 
@@ -98,18 +104,18 @@ def main():
     
     ## Set mkdir TensorBoard 
     ##root_logdir = f'/media/SSD/rheology2023/VitModel/Regression/tensorflow/ExpTest/R1/Mylogs_tensor/'
-    root_logdir = f"{root_base}/Mylogs_tensor"
+    root_logdir = f"{root_base}/{args.tensorName}"
     os.makedirs(root_logdir, exist_ok=True)
     ### Run TensorBoard 
     run_logdir = get_run_logdir(root_logdir)
     tensorboard_cb = callbacks.TensorBoard(log_dir=run_logdir)
     
-    modelNamemkdir = f"{root_base}/models"
+    modelNamemkdir = f"{root_base}/{args.FmodelsName}"
     os.makedirs(modelNamemkdir, exist_ok=True)
     modelName = f'modelRegress_EffNetB7_Rheology_{_R}.h5'
     Model2save = f'{modelNamemkdir}/{modelName}'
     
-    root_Metrics = f'{root_base}/on_epoch_end/'
+    root_Metrics = f'{root_base}/{args.epochendName}/'
     os.makedirs(root_Metrics, exist_ok=True)
     class Metrics(Callback):
             def on_epoch_end(self, epochs, logs={}):
@@ -124,7 +130,7 @@ def main():
                   optimizer=Adam(lr, decay=lr),
                   metrics=['mse'])
     
-    checkpoint_filepath = f"{root_base}/checkpointer"
+    checkpoint_filepath = f"{root_base}/{args.checkpointerName}"
     os.makedirs(checkpoint_filepath, exist_ok=True)
     
     model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_filepath, save_freq='epoch', 
