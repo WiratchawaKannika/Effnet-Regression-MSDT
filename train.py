@@ -44,18 +44,19 @@ def get_preds_and_labels(model, generator):
 def main():
      # construct the argument parser
     my_parser = argparse.ArgumentParser()
-    my_parser.add_argument('--epochs', type=int, default=200, help='number of epochs to train our network for')
+    my_parser.add_argument('--epochs', type=int, default=1000, help='number of epochs to train our network for')
     my_parser.add_argument('--gpu', type=int, default=0, help='Number GPU 0,1')
-    my_parser.add_argument('--data_path', type=str, default='/home/kannika/CSV/datasetMSDT_train_valid.csv')
-    my_parser.add_argument('--save_dir', type=str, help='Main Output Path', default="/media/data/ModelEffNet/Regression")
+    my_parser.add_argument('--data_path', type=str, default='/home/kannika/codes_AI/Rheology2023/MSDTGLY7Level10fold_datatrain_tSecond.csv')
+    my_parser.add_argument('--save_dir', type=str, help='Main Output Path', default="/media/SSD/rheology2023/EffNetB7Model/Regression/tensorflow_GLY7Level")
     my_parser.add_argument('--name', type=str, help='Name to save output in save_dir')
     my_parser.add_argument('--R', type=int, help='[1:R1, 2:R2]')
+    my_parser.add_argument('--fold', type=int, help='1-10')
     my_parser.add_argument('--lr', type=float, default=1e-4)
     my_parser.add_argument('--batchsize', type=int, default=16)
     my_parser.add_argument('--resume', action='store_true')
     my_parser.add_argument('--checkpoint_dir', type=str ,default=".")
     my_parser.add_argument('--tensorName', type=str ,default="Mylogs_tensor")
-    my_parser.add_argument('--checkpointerName', type=str ,default="checkpointer")
+    #my_parser.add_argument('--checkpointerName', type=str ,default="checkpointer")
     my_parser.add_argument('--epochendName', type=str ,default="on_epoch_end")
     my_parser.add_argument('--FmodelsName', type=str ,default="models")
     
@@ -69,11 +70,12 @@ def main():
     print("Num GPUs:", len(physical_devices))
     
     ## get my_parser
+    Fold = f"fold{args.fold}"
     save_dir = args.save_dir
     name = args.name
     R = args.R
     _R = f'R{R}'
-    root_base = f'{save_dir}/{name}/{_R}'
+    root_base = f'{save_dir}/{name}/{Fold}/{_R}'
     os.makedirs(root_base, exist_ok=True)
     data_path = args.data_path
     BATCH_SIZE = args.batchsize
@@ -97,8 +99,8 @@ def main():
     
     ## import dataset
     DF = pd.read_csv(data_path)
-    DF_TRAIN = DF[DF['subset']=='train'].reset_index(drop=True)
-    DF_VAL = DF[DF['subset']=='valid'].reset_index(drop=True)
+    DF_TRAIN = DF[DF["fold"]!= args.fold].reset_index(drop=True)
+    DF_VAL = DF[DF["fold"]== args.fold].reset_index(drop=True)
     ### Get data Loder
     train_generator, val_generator = Data_generator(IMAGE_SIZE, BATCH_SIZE, DF_TRAIN, DF_VAL)
     
@@ -112,7 +114,7 @@ def main():
     
     modelNamemkdir = f"{root_base}/{args.FmodelsName}"
     os.makedirs(modelNamemkdir, exist_ok=True)
-    modelName = f'modelRegress_EffNetB7_Rheology_{_R}.h5'
+    modelName = f'modelRegress_EffNetB7_RheologyGLY7Level_{Fold}_{_R}.h5'
     Model2save = f'{modelNamemkdir}/{modelName}'
     
     root_Metrics = f'{root_base}/{args.epochendName}/'
@@ -133,14 +135,13 @@ def main():
     checkpoint_filepath = f"{root_base}/{args.checkpointerName}"
     os.makedirs(checkpoint_filepath, exist_ok=True)
     
-    model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_filepath, save_freq='epoch', 
-                                                                       ave_weights_only=False, monitor="val_mean_absolute_percentage_error")
-    
+#     model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_filepath, save_freq='epoch', 
+#                                                                        ave_weights_only=False, monitor="val_mean_absolute_percentage_error")
     
     
     ## Fit model 
     model.fit(train_generator, epochs=epochs, validation_data=val_generator,
-                callbacks = [metrics, tensorboard_cb, model_checkpoint_callback])
+                callbacks = [metrics, tensorboard_cb])
     
     # Save model as .h5        
     model.save(Model2save)
