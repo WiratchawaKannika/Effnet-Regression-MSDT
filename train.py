@@ -132,8 +132,8 @@ def main():
                   optimizer=Adam(lr, decay=lr),
                   metrics=['mse'])
     
-    checkpoint_filepath = f"{root_base}/{args.checkpointerName}"
-    os.makedirs(checkpoint_filepath, exist_ok=True)
+#     checkpoint_filepath = f"{root_base}/{args.checkpointerName}"
+#     os.makedirs(checkpoint_filepath, exist_ok=True)
     
 #     model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_filepath, save_freq='epoch', 
 #                                                                        ave_weights_only=False, monitor="val_mean_absolute_percentage_error")
