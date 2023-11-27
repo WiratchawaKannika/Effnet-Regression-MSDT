@@ -58,6 +58,7 @@ def main():
     my_parser = argparse.ArgumentParser()
     my_parser.add_argument('--epochs', type=int, default=1000, help='number of epochs to train our network for')
     my_parser.add_argument('--gpu', type=int, default=0, help='Number GPU 0,1')
+    my_parser.add_argument('--set4000sr', action='store_true')
     my_parser.add_argument('--data_path', type=str, default='/home/kannika/codes_AI/Rheology2023/MSDTGLY7Level10fold_datatrain_tSecond.csv')
     my_parser.add_argument('--save_dir', type=str, help='Main Output Path', default="/media/SSD/rheology2023/EffNetB7Model/Regression/tensorflow_GLY7Level")
     my_parser.add_argument('--name', type=str, help='Name to save output in save_dir')
@@ -126,9 +127,13 @@ def main():
     
     modelNamemkdir = f"{root_base}/{args.FmodelsName}"
     os.makedirs(modelNamemkdir, exist_ok=True)
-    modelName = f'modelRegress_EffNetB7_RheologyGLY7Level_{Fold}_{_R}.h5'
+    ## Check GLY set
+    if args.set4000sr :
+        modelName = f'modelRegress_EffNetB7_RheologyGLY7Level4000Serise_{Fold}_{_R}.h5'
+    else: 
+        modelName = f'modelRegress_EffNetB7_RheologyGLY7Level_{Fold}_{_R}.h5'
+        
     Model2save = f'{modelNamemkdir}/{modelName}'
-    
     root_Metrics = f'{root_base}/{args.epochendName}/'
     os.makedirs(root_Metrics, exist_ok=True)
     class Metrics(Callback):
