@@ -19,6 +19,18 @@ from DataLoader import Data_generator
 from tensorflow.keras.models import load_model
 import argparse
 
+from tensorflow.compat.v1 import ConfigProto
+from tensorflow.compat.v1 import InteractiveSession
+
+
+def fix_gpu():
+    config = ConfigProto()
+    config.gpu_options.allow_growth = True
+    session = InteractiveSession(config=config)
+
+
+fix_gpu()
+
     
 def get_run_logdir(root_logdir):
     import time
